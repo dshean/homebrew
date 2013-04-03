@@ -12,6 +12,12 @@ def mysql?
   build.include? 'with-mysql'
 end
 
+#If openjpeg, want to disable jasper (originally in complete)
+
+def openjpeg?
+  build.include? 'with-openjpeg'
+end
+
 def no_python?
   build.include? 'without-python'
 end
@@ -28,7 +34,6 @@ def armadillo?
   build.include? 'enable-armadillo'
 end
 
-
 class Gdal < Formula
   homepage 'http://www.gdal.org/'
   url 'http://download.osgeo.org/gdal/gdal-1.9.2.tar.gz'
@@ -39,6 +44,7 @@ class Gdal < Formula
   option 'complete', 'Use additional Homebrew libraries to provide more drivers.'
   option 'with-postgres', 'Specify PostgreSQL as a dependency.'
   option 'with-mysql', 'Specify MySQL as a dependency.'
+  option 'with-openjpeg', 'Specify openjpeg as a dependency.'
   option 'without-python', 'Build without Python support (disables a lot of tools).'
   option 'enable-opencl', 'Build with OpenCL acceleration.'
   option 'enable-armadillo', 'Build with Armadillo accelerated TPS transforms.'
@@ -55,12 +61,13 @@ class Gdal < Formula
   depends_on 'proj'
   depends_on 'geos'
 
-  depends_on 'sqlite'  # To ensure compatibility with SpatiaLite.
+  depends_on 'sqlite' # To ensure compatibility with SpatiaLite.
   depends_on 'freexl'
   depends_on 'libspatialite'
 
   depends_on "postgresql" if postgres?
   depends_on "mysql" if mysql?
+  depends_on "openjpeg" if openjpeg?
 
   # Without Numpy, the Python bindings can't deal with raster data.
   depends_on 'numpy' => :python unless no_python?
@@ -70,7 +77,6 @@ class Gdal < Formula
   if complete?
     # Raster libraries
     depends_on "netcdf" # Also brings in HDF5
-    depends_on "jasper"
     depends_on "webp"
     depends_on "cfitsio"
     depends_on "epsilon"
@@ -123,7 +129,7 @@ class Gdal < Formula
       "--with-geos=#{HOMEBREW_PREFIX}/bin/geos-config",
       "--with-static-proj4=#{HOMEBREW_PREFIX}",
 
-      # GRASS backend explicitly disabled.  Creates a chicken-and-egg problem.
+      # GRASS backend explicitly disabled. Creates a chicken-and-egg problem.
       # Should be installed separately after GRASS installation using the
       # official GDAL GRASS plugin.
       "--without-grass",
@@ -132,18 +138,18 @@ class Gdal < Formula
 
     # Optional Homebrew packages supporting additional formats.
     supported_backends = %w[
-      liblzma
-      cfitsio
-      hdf5
-      netcdf
-      jasper
-      xerces
-      odbc
-      dods-root
-      epsilon
-      webp
-      poppler
-    ]
+liblzma
+cfitsio
+hdf5
+netcdf
+jasper
+xerces
+odbc
+dods-root
+epsilon
+webp
+poppler
+]
     if complete?
       supported_backends.delete 'liblzma'
       args << '--with-liblzma=yes'
@@ -160,40 +166,39 @@ class Gdal < Formula
     # Podofo is disabled because Poppler provides the same functionality and
     # then some.
     unsupported_backends = %w[
-      gta
-      ogdi
-      fme
-      hdf4
-      openjpeg
-      fgdb
-      ecw
-      kakadu
-      mrsid
-      jp2mrsid
-      mrsid_lidar
-      msg
-      oci
-      ingres
-      libkml
-      dwgdirect
-      idb
-      sde
-      podofo
-      rasdaman
-    ]
+gta
+ogdi
+fme
+hdf4
+fgdb
+ecw
+kakadu
+mrsid
+jp2mrsid
+mrsid_lidar
+msg
+oci
+ingres
+libkml
+dwgdirect
+idb
+sde
+podofo
+rasdaman
+]
     args.concat unsupported_backends.map {|b| '--without-' + b} unless build.include? 'enable-unsupported'
 
     # Database support.
     args << (postgres? ? "--with-pg=#{HOMEBREW_PREFIX}/bin/pg_config" : '--without-pg')
     args << (mysql? ? "--with-mysql=#{HOMEBREW_PREFIX}/bin/mysql_config" : '--without-mysql')
-
+    
     # Python is installed manually to ensure everything is properly sandboxed.
     args << '--without-python'
 
     # Scripting APIs that have not been re-worked to respect Homebrew prefixes.
     #
     # Currently disabled as they install willy-nilly into locations outside of
-    # the Homebrew prefix.  Enable if you feel like it, but uninstallation may be
+    # the Homebrew prefix. Enable if you feel like it, but uninstallation may be
     # a manual affair.
     #
     # TODO: Fix installation of script bindings so they install into the
@@ -202,6 +207,9 @@ class Gdal < Formula
     args << "--without-php"
     args << "--without-ruby"
 
+    # openjpeg support
+    args << (openjpeg? ? "--with-openjpeg" : '--without-openjpeg')
+    
     args << (opencl? ? '--with-opencl' : '--without-opencl')
     args << (armadillo? ? '--with-armadillo=yes' : '--with-armadillo=no')
 
@@ -266,7 +274,7 @@ class Gdal < Formula
   unless no_python?
     def caveats
       <<-EOS
-This version of GDAL was built with Python support.  In addition to providing
+This version of GDAL was built with Python support. In addition to providing
 modules that makes GDAL functions available to Python scripts, the Python
 binding provides ~18 additional command line tools.
 
@@ -274,8 +282,8 @@ Unless you are using Homebrew's Python, both the bindings and the
 additional tools will be unusable unless the following directory is added to
 the PYTHONPATH:
 
-    #{HOMEBREW_PREFIX}/lib/#{which_python}/site-packages
-      EOS
+#{HOMEBREW_PREFIX}/lib/#{which_python}/site-packages
+EOS
     end
   end
 end
@@ -289,11 +297,11 @@ index 997bbbf..a1928d5 100755
 --- a/configure
 +++ b/configure
 @@ -24197,7 +24197,7 @@ else
- rm -f islibdappost310.*
- echo '#include "Connect.h"' > islibdappost310.cpp
- echo 'int main(int argc, char** argv) { return 0; } ' >> islibdappost310.cpp
+rm -f islibdappost310.*
+echo '#include "Connect.h"' > islibdappost310.cpp
+echo 'int main(int argc, char** argv) { return 0; } ' >> islibdappost310.cpp
 -if test -z "`${CXX} islibdappost310.cpp -c ${DODS_INC} 2>&1`" ; then
 +if test -z "`${CXX} islibdappost310.cpp -c ${DODS_INC} ${CPPFLAGS} 2>&1`" ; then
-     DODS_INC="$DODS_INC -DLIBDAP_310 -DLIBDAP_39"
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: libdap >= 3.10" >&5
- $as_echo "libdap >= 3.10" >&6; }
+DODS_INC="$DODS_INC -DLIBDAP_310 -DLIBDAP_39"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: libdap >= 3.10" >&5
+$as_echo "libdap >= 3.10" >&6; }
