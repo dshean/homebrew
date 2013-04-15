@@ -142,7 +142,6 @@ liblzma
 cfitsio
 hdf5
 netcdf
-jasper
 xerces
 odbc
 dods-root
@@ -209,6 +208,7 @@ rasdaman
 
     # openjpeg support
     args << (openjpeg? ? "--with-openjpeg" : '--without-openjpeg')
+    args << (openjpeg? ? "--without-jasper" : '--with-jasper')
     
     args << (opencl? ? '--with-opencl' : '--without-opencl')
     args << (armadillo? ? '--with-armadillo=yes' : '--with-armadillo=no')
